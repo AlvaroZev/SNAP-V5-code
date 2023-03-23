@@ -1,4 +1,4 @@
-// #include <avr/sleep.h> //librerias para modos de bajo consumo
+                                                                                                                                                                                 // #include <avr/sleep.h> //librerias para modos de bajo consumo
 // #define interruptPin 2
 #include <Wire.h>              //libreria para i2c
 #include <LiquidCrystal_I2C.h> //libreria para pantalla
@@ -35,20 +35,20 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // para direccionar a 0x27 (pin A4 y A5)
 
 // Amplificación y bias
 
-float R1 = 8060.0;
-float R2 = 3300.0;
-float R3 = 1500.0;
-float R4 = 10000.0;
-float Rc = 500.0; // ohm
+const float R1 = 8060.0;
+const float R2 = 3300.0;
+const float R3 = 1500.0;
+const float R4 = 10000.0;
+const float Rc = 500.0; // ohm
 
-float A = (R4 / (R3 + R4)) * ((R1 + R2) / (R2));
-float b_ = R1 / R2;
+const float A = (R4 / (R3 + R4)) * ((R1 + R2) / (R2));
+const float b_ = R1 / R2;
 
 // otras variables
 float vcc_source = 0.0;
 float vcc_controlled = 0.0;
-int warmtime = 1000;    // ms
-int measuretime = 9000; // ms
+const int warmtime = 1000;    // ms
+const int measuretime = 9000; // ms
 float sensor_middle_value = 0.0;
 float battery_level_percentage = 0.0;
 float vref_max=0.0;
@@ -121,13 +121,17 @@ void setup()
   {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Calibrando...");
+    lcd.print("Calibrando, no");
+    lcd.setCursor(0, 1);
+    lcd.print("coloque muestra");
   }
   else
   {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Calibrating...");
+    lcd.print("Calibrating, do");
+    lcd.setCursor(0, 1);
+    lcd.print("not place sample");
   }
 
 
@@ -177,6 +181,24 @@ void setup()
     while (1 && (digitalRead(button2) == HIGH && digitalRead(button4) == HIGH))
     {
     }
+  }
+
+    // Announce calibration
+  if (language)
+  {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Calibrando, no");
+    lcd.setCursor(0, 1);
+    lcd.print("coloque muestra");
+  }
+  else
+  {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Calibrating, do");
+    lcd.setCursor(0, 1);
+    lcd.print("not place sample");
   }
     
   //check vref max and min values
@@ -268,16 +290,56 @@ void loop()
     {
       // N
       element = 'N';
+      //say element
+      if (language)
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Elemento: N");
+      }
+      else
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Element: N");
+      }
     }
     else if (digitalRead(button2) == LOW)
     {
       // P
       element = 'P';
+      //say element
+      if (language)
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Elemento: P");
+      }
+      else
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Element: P");
+      }
+      
     }
     else if (digitalRead(button3) == LOW)
     {
       // K
       element = 'K';
+      //say element
+      if (language)
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Elemento: K");
+      }
+      else
+      {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Element: K");
+      }
     }
 
     // measurement logic
@@ -375,7 +437,22 @@ void loop()
         }
 
         // wait for user input to continue
-        delay(2000);
+        bool flag99 = 0;
+        for (int i = 0; i < 15; i++)
+        {
+          if (digitalRead(button4) == LOW)
+          {
+            flag99 = 1;
+            break;
+            
+          }
+          delay(100);
+        }
+        
+        if (flag99)
+        {
+          break;
+        }
         // show press 4 to continue
         lcd.clear();
         if (language)
@@ -392,8 +469,24 @@ void loop()
           lcd.setCursor(0, 1); // retirar
           lcd.print("go to menu");
         }
-        delay(1000);
+        bool flag97 = 0;
+        for (int i = 0; i < 15; i++)
+        {
+          if (digitalRead(button4) == LOW)
+          {
+            flag97 = 1;
+            break;
+            
+          }
+          delay(100);
+        }
+        
+        if (flag97)
+        {
+          break;
+        }
       }
+      
     }
   }
 }
@@ -414,8 +507,25 @@ void calculate_results(char element)
 
   calculated_V_pht_blank = corriente_pht(prom_sensor_blank, prom_vref_blank)*(Rc/1000);
   calculated_V_pht_color = corriente_pht(prom_sensor_color, prom_vref_color)*(Rc/1000);
-  calculated_absorbance = -log10(calculated_V_pht_color  /calculated_V_pht_blank);
+  if (element=='N') {
+
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.657;
   calculated_concentration = 0.0;
+  }
+
+  else if (element=='K') {
+
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.495;
+  calculated_concentration = 0.0;
+
+  }
+
+  else if (element=='P') {
+
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.97;
+  calculated_concentration = 0.0;
+
+  }
 
 }
 
@@ -429,14 +539,12 @@ void show_results(char element)
   // show dynamic alternatives, 1 repeat results, 2 main menu, turn off device
   int flag_out = 1;
   int flag_out_1 = 1;
-  int flag_out_2 = 1;
-  int flab_out_blank = 1;
-  int flab_out_color = 1;
-  int flab_out_absorbance = 1;
   while(flag_out){
-
+    //decir "resultados" o "results y boton 4 para continuar
 
     //indicate that button 4 continues the process
+    delay(350);
+    
     while (flag_out_1){
       //decir "resultados" o "results
       lcd.clear();
@@ -450,11 +558,26 @@ void show_results(char element)
         lcd.setCursor(0, 0);
         lcd.print("Results");
       }
-      delay(1000);
-      if (digitalRead(button4) == LOW)
+          // wait 1.5s while checking button 4 press TO BREAK
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flag_out_1 = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+          
+        }
+        delay(100);
       }
+    
+      if (flag99)
+      { 
+        flag_out_1 = 0;
+        break;
+      }
+
+
       lcd.clear();
       if (language)
       {
@@ -470,23 +593,39 @@ void show_results(char element)
         lcd.setCursor(0, 1);
         lcd.print("continue");
       }
-      delay(1000);
-      if (digitalRead(button4) == LOW)
+      bool flag98 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flag_out_1 = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag98 = 1;
+          break;
+          
+        }
+        delay(100);
       }
     
+      if (flag98)
+      { 
+        flag_out_1 = 0;
+        break;
+      }
     }
 
     // show concentration until button 4 is pressed
-    while (flag_out_2){
-      lcd.clear();
+    delay(350);
+    lcd.clear();
+    while (true){
+      
       if (language)
       {
         lcd.setCursor(0, 0);
         lcd.print("Concentracion:");
         lcd.setCursor(0, 1);
         lcd.print(calculated_concentration);
+        //units ppm
+        lcd.setCursor(13, 1);
+        lcd.print("ppm");
       }
       else
       {
@@ -494,24 +633,40 @@ void show_results(char element)
         lcd.print("Concentration:");
         lcd.setCursor(0, 1);
         lcd.print(calculated_concentration);
+        lcd.setCursor(13, 1);
+        lcd.print("ppm");
       }
-      delay(1000);
-      if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flag_out_2 = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
+      }
+    
+      if (flag99)
+      { 
+        
+        break;
       }
     }
 
 
-    // show all blank results until button 4
-    while (flab_out_blank){
-      lcd.clear();
+    delay(350);
+    lcd.clear();
+    while (true){
       if (language)
       {
         lcd.setCursor(0, 0);
         lcd.print("Vref blanco:");
         lcd.setCursor(0, 1);
         lcd.print(prom_vref_blank);
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
       else
       {
@@ -519,135 +674,261 @@ void show_results(char element)
         lcd.print("Vref blank:");
         lcd.setCursor(0, 1);
         lcd.print(prom_vref_blank);
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
-      delay(2000);
-      if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_blank = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
       }
     
-    delay(1000);
-      lcd.clear();
+      if (flag99)
+      { 
+        
+        break;
+      }
+    }
+
+
+
+    delay(350);
+    lcd.clear();
+    while(true){
       if (language)
       {
         lcd.setCursor(0, 0);
         lcd.print("Amplificacion:");
         lcd.setCursor(0, 1);
         lcd.print("Blank:");
-        lcd.setCursor(10, 1);
+        lcd.setCursor(8, 1);
         lcd.print(prom_sensor_blank);
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       } else
       {
         lcd.setCursor(0, 0);
         lcd.print("Amplification:");
         lcd.setCursor(0, 1);
         lcd.print("Blank:");
-        lcd.setCursor(10, 1);
+        lcd.setCursor(8, 1);
         lcd.print(prom_sensor_blank);
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
-      delay(2000);
-      if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_blank = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
       }
+    
+      if (flag99)
+      { 
+       
+        break;
+      }
+    }
 
-      lcd.clear();
+
+    delay(350);
+    lcd.clear();
+    while(true){
 
       if (language)
       {
+
         lcd.setCursor(0, 0);
-        lcd.print("Vpht blanco:");
+        lcd.print("Calc. Sensor");
         lcd.setCursor(0, 1);
+        lcd.print("Blanco:");
+        lcd.setCursor(9, 1);
         lcd.print(calculated_V_pht_blank);
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       } else
       {
         lcd.setCursor(0, 0);
-        lcd.print("Vpht blank:");
+        lcd.print("Calc. Sensor");
         lcd.setCursor(0, 1);
+        lcd.print("Blank:");
+        lcd.setCursor(9, 1);
         lcd.print(calculated_V_pht_blank);
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
-      delay(2000);
-      if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_blank = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
+      }
+    
+      if (flag99)
+      { 
+       
+        break;
       }
       
     }
 
     
     
-    // show all color results until button 4
-    while (flab_out_color){
-      // wait
-      lcd.clear();
+    delay(350);
+    lcd.clear();
+
+    while (true){
+      
       if (language)
       {
         lcd.setCursor(0, 0);
         lcd.print("Vref color:");
         lcd.setCursor(0, 1);
         lcd.print(prom_vref_color);
-      } else
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
+      }
+      else
       {
         lcd.setCursor(0, 0);
         lcd.print("Vref color:");
         lcd.setCursor(0, 1);
         lcd.print(prom_vref_color);
-      }
-      delay(3000);
-        if (digitalRead(button4) == LOW)
+        lcd.setCursor(15, 1);
+        lcd.print("V");
+      } 
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_color = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
       }
-      
+    
+      if (flag99)
+      { 
+       
+        break;
+      }
+    }
 
-      lcd.clear();
+
+    delay(350);
+    lcd.clear();
+    while(true){
+
       if (language)
       {
         lcd.setCursor(0, 0);
         lcd.print("Amplificacion:");
         lcd.setCursor(0, 1);
         lcd.print("Color:");
-        lcd.setCursor(10, 1);
+        lcd.setCursor(8, 1);
         lcd.print(prom_sensor_color);
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       } else
       {
         lcd.setCursor(0, 0);
         lcd.print("Amplification:");
         lcd.setCursor(0, 1);
         lcd.print("Color:");
-        lcd.setCursor(10, 1);
+        lcd.setCursor(8, 1);
         lcd.print(prom_sensor_color);
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
-      delay(3000);
+      
 
-    if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_color = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
+      }
+    
+      if (flag99)
+      { 
+       
+        break;
       }
 
-      lcd.clear();
+    }
+
+    delay(350);
+    lcd.clear();
+    while(true){
 
       if (language)
       {
         lcd.setCursor(0, 0);
-        lcd.print("Vpht color:");
+        lcd.print("Calc. Sensor");
         lcd.setCursor(0, 1);
+        lcd.print("Color:");
+        lcd.setCursor(9, 1);
         lcd.print(calculated_V_pht_color);
+        //units V
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       } else
       {
         lcd.setCursor(0, 0);
-        lcd.print("Vpht color:");
+        lcd.print("Calc. Sensor");
         lcd.setCursor(0, 1);
+        lcd.print("Color:");
+        lcd.setCursor(9, 1);
         lcd.print(calculated_V_pht_color);
+        lcd.setCursor(15, 1);
+        lcd.print("V");
       }
-      delay(3000);
 
-    if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_color = 0;
+        if (digitalRead(button4) == LOW)
+        {
+          flag99 = 1;
+          break;
+        }
+        delay(100);
+      }
+    
+      if (flag99)
+      { 
+       
+        break;
       }
 
-      lcd.clear();
+    }
+
+
+    delay(350);
+    lcd.clear();
+    while(true){
 
       if (language)
       {
@@ -655,22 +936,38 @@ void show_results(char element)
         lcd.print("Absorbancia:");
         lcd.setCursor(0, 1);
         lcd.print(calculated_absorbance);
+        //units abs.
+        lcd.setCursor(11, 1);
+        lcd.print("abs.");
       } else
       {
         lcd.setCursor(0, 0);
         lcd.print("Absorbance:");
         lcd.setCursor(0, 1);
         lcd.print(calculated_absorbance);
+        lcd.setCursor(11, 1);
+        lcd.print("abs.");
       }
-      delay(3000);
-
-    if (digitalRead(button4) == LOW)
+      bool flag99 = 0;
+      for (int i = 0; i < 15; i++)
       {
-        flab_out_color = 0;
+        if (digitalRead(button4) == LOW)
+        { 
+          flag99 = 1;
+          break;
+          
+        }
+        delay(100);
+      }
+    
+      if (flag99)
+      { 
+       
+        break;
       }
     }
 
-
+    delay(200);
     lcd.clear();
     if (language)
     {
@@ -686,22 +983,27 @@ void show_results(char element)
       lcd.setCursor(0, 1);
       lcd.print("2. Menu");
     }
-    delay(1000);
+    
     
     // wait for button 1 or 2
-    while (digitalRead(button1) == HIGH && digitalRead(button2) == HIGH)
+    while (true)
     {
       // wait
-    }
-    
-    if (digitalRead(button1) == LOW){
+      if (digitalRead(button1) == LOW){
       //repeat
+      
       flag_out = 1;
+      flag_out_1 = 1;
+      break;
     } else if (digitalRead(button2) == LOW){
       //menu
+      
       flag_out = 0;
-
+      break;
     }
+    }
+    
+    
 
 }
 }
@@ -723,7 +1025,7 @@ void measure(char element)
 
 void measure_base(char element, String sample)
 {
-
+  delay(500);
   // ask user to insert sample
   if (language)
   {
@@ -787,7 +1089,7 @@ void measure_base(char element, String sample)
   delay(warmtime);
 
   // change vref to optimal value
-  smart_control_vref();
+  smart_control_vref(); //TODO
   //delay(40000);
   // take measurements
   if (sample == "Blank")
@@ -860,7 +1162,23 @@ void measure_base(char element, String sample)
     }
 
     // wait for user input to continue
-    delay(1500);
+    // wait 1.5s while checking button 4 press TO BREAK
+    bool flag99 = 0;
+    for (int i = 0; i < 15; i++)
+    {
+      if (digitalRead(button4) == LOW)
+      {
+        flag99 = 1;
+        break;
+        
+      }
+      delay(100);
+    }
+    
+    if (flag99)
+    {
+      break;
+    }
     // show press 4 to continue
     
     lcd.clear();
@@ -878,7 +1196,22 @@ void measure_base(char element, String sample)
       lcd.setCursor(0, 1);      // retirar
       lcd.print("to continue");
     }
-    delay(1500);
+    bool flag98 = 0;
+    for (int i = 0; i < 15; i++)
+    {
+      if (digitalRead(button4) == LOW)
+      {
+        flag98 = 1;
+        break;
+        
+      }
+      delay(100);
+    }
+    
+    if (flag98)
+    {
+      break;
+    }
   }
   
   
@@ -895,23 +1228,25 @@ void smart_control_vref()
     if (Aread2volt(average_adc(sensor_amplified)) < sensor_middle_value)
     {
       // decrease vref
-      generate_vref(Aread2volt(average_adc(vref_feedback)) - 0.1);
+      generate_vref(  Aread2volt(average_adc(vref_feedback)) - (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
     }
     else
     {
       // increase vref
-      generate_vref(Aread2volt(average_adc(vref_feedback)) + 0.05);
+      generate_vref(Aread2volt(average_adc(vref_feedback)) + (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
     }
 
     if (abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)<= 0.1)
     {
       // finish function
       repeat_flag = 0;
+      
     }
-    else if (Aread2volt(average_adc(vref_feedback)) > vref_max || Aread2volt(average_adc(vref_feedback)) < vref_min)
+    else if (Aread2volt(average_adc(vref_feedback)) >= vref_max || Aread2volt(average_adc(vref_feedback)) <= vref_min)
     { // might be the same as sensor_amplified range, test
       // finish function
       repeat_flag = 0;
+      
     }
     else
     {
@@ -937,6 +1272,10 @@ int check_led_pose(char element)
 
   while (element != read_led_pose())
   {
+    if (element ==read_led_pose() ) {
+      break;
+    }
+
     if (language)
     {
       lcd.clear();
@@ -960,6 +1299,71 @@ int check_led_pose(char element)
       lcd.print(element);
     }
     delay(2000);
+    if (element ==read_led_pose() ) {
+      break;
+    }
+    //show "pull lateral pin", "move lever to element", "push lateral pin"
+    if (language)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Jale pin lateral");
+      
+    }
+    else
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Pull lateral pin");
+      
+    }
+    delay(2000);
+    if (element ==read_led_pose() ) {
+      break;
+    }
+
+    if (language)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Mueva palanca a:");
+      lcd.setCursor(0, 1); // retirar
+      lcd.print(element);
+    }
+    else
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Move lever to:");
+      lcd.setCursor(0, 1); // retirar
+      lcd.print(element);
+    }
+    delay(2000);
+    if (element ==read_led_pose() ) {
+      break;
+    }
+
+    if (language)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Empuje pin");
+      lcd.setCursor(0, 1); // retirar
+      lcd.print("lateral");
+      
+    }
+    else
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0); // retirar
+      lcd.print("Push lateral pin");
+      
+    }
+    delay(2000);
+    if (element ==read_led_pose() ) {
+      break;
+    }
+
   }
   // should i wait for user input? pro: less energy, con: less intuitive
   // add instructions? like pull out, move, pull in?
@@ -989,16 +1393,7 @@ float Aread2volt(float aread)
 
 char read_led_pose()
 {
-  lcd.clear();
-  lcd.setCursor(0, 0); // retirar
-  if (language)
-  {
-    lcd.print("Verificando LED");
-  }
-  else
-  {
-    lcd.print("Checking LED");
-  }
+  
 
   float vref_response = generate_vref(2.68);
   delay(400);
