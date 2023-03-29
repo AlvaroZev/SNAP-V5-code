@@ -1,6 +1,6 @@
                                                                                                                                                                                  // #include <avr/sleep.h> //librerias para modos de bajo consumo
 // #define interruptPin 2
-#include <Wire.h>              //libreria para i2c
+//#include <Wire.h>              //libreria para i2c
 #include <LiquidCrystal_I2C.h> //libreria para pantalla
 // revisar dropout voltage with led's
 
@@ -202,19 +202,19 @@ void setup()
   }
     
   //check vref max and min values
-  generate_vref(0);
+  generate_vref(0.0);
   delay(700);
   vref_min= Aread2volt(average_adc(vref_feedback));
 
 
-  generate_vref(5);
-  delay(700);
+  generate_vref(5.0);
+  delay(1000);
   vref_max= Aread2volt(average_adc(vref_feedback));
   
 
   // Check max value
   turnOnLED(read_led_pose());
-  generate_vref(0);
+  generate_vref(0.0);
   delay(warmtime / 2);
   float sensor_range_max = Aread2volt(average_adc(sensor_amplified));
   turnOffLEDs();
@@ -485,8 +485,7 @@ void loop()
         {
           break;
         }
-      }
-      
+      } 
     }
   }
 }
@@ -1090,7 +1089,7 @@ void measure_base(char element, String sample)
 
   // change vref to optimal value
   smart_control_vref(); //TODO
-  //delay(40000);
+  delay(1000);
   // take measurements
   if (sample == "Blank")
   {
@@ -1225,16 +1224,37 @@ void smart_control_vref()
   int repeat_flag = 1;
   while (repeat_flag)
   {
+    float vref_generated = 0.0;
     if (Aread2volt(average_adc(sensor_amplified)) < sensor_middle_value)
     {
       // decrease vref
-      generate_vref(  Aread2volt(average_adc(vref_feedback)) - (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
+      //check if vref generated parameter is positive 
+       vref_generated = Aread2volt(average_adc(vref_feedback)) - (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+      if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
+      {
+        generate_vref(vref_generated);
+      }
+      else{
+        generate_vref(vref_min);
+        repeat_flag = 0;
+      }
+
+      // generate_vref(  Aread2volt(average_adc(vref_feedback)) - (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
     }
     else
     {
       // increase vref
-      generate_vref(Aread2volt(average_adc(vref_feedback)) + (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
+       vref_generated = Aread2volt(average_adc(vref_feedback)) + (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+      if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
+      {
+        generate_vref(vref_generated);
+      }else{
+        generate_vref(vref_max);
+        repeat_flag = 0;
+      }
+      // generate_vref(Aread2volt(average_adc(vref_feedback)) + (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)) );
     }
+    if (repeat_flag == 1){
 
     if (abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)<= 0.1)
     {
@@ -1253,18 +1273,31 @@ void smart_control_vref()
       // repeat
       repeat_flag = 1;
     }
-    // lcd.setCursor(0, 1); // retirar
-    // lcd.print("Vr:");
-    // lcd.setCursor(4, 1); // retirar
-    // lcd.print(Aread2volt(average_adc(vref_feedback)));
-    // lcd.setCursor(9, 1); // retirar
-    // lcd.print("Sa:");
-    // lcd.setCursor(12, 1); // retirar
-    // lcd.print(Aread2volt(average_adc(sensor_amplified)));
-    // delay(800);
+    }
+    //check button 2 && 4 to show this info 
+    if (digitalRead(button1) == LOW && digitalRead(button2) == LOW){
+    lcd.clear();
+    lcd.setCursor(0, 0); // retirar
+    lcd.print(vref_min);
+    lcd.setCursor(5, 0); // retirar
+    lcd.print(vref_max);
+    lcd.setCursor(10, 0); // retirar
+    lcd.print(vref_generated);
+    lcd.setCursor(15, 0); // retirar
+    lcd.print(repeat_flag);    
+    lcd.setCursor(0, 1); // retirar
+    lcd.print("Vr:");
+    lcd.setCursor(4, 1); // retirar
+    lcd.print(Aread2volt(average_adc(vref_feedback)));
+    lcd.setCursor(9, 1); // retirar
+    lcd.print("Sa:");
+    lcd.setCursor(12, 1); // retirar
+    lcd.print(Aread2volt(average_adc(sensor_amplified)));
+    delay(500);
     
   }
 
+  }
 }
 
 int check_led_pose(char element)
