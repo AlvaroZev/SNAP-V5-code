@@ -1222,14 +1222,16 @@ void smart_control_vref()
   // if sensor-sensor_middle_value<=0.02(err), finish function, else , if vref is outside its own range, finish function
 
   int repeat_flag = 1;
+  int count=0;
   while (repeat_flag)
   {
+    count++;
     float vref_generated = 0.0;
     if (Aread2volt(average_adc(sensor_amplified)) < sensor_middle_value)
     {
       // decrease vref
       //check if vref generated parameter is positive 
-       vref_generated = Aread2volt(average_adc(vref_feedback)) - (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+       vref_generated = Aread2volt(average_adc(vref_feedback)) - (0.8*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
       if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
       {
         generate_vref(vref_generated);
@@ -1244,7 +1246,7 @@ void smart_control_vref()
     else
     {
       // increase vref
-       vref_generated = Aread2volt(average_adc(vref_feedback)) + (0.15*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+       vref_generated = Aread2volt(average_adc(vref_feedback)) + (0.8*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
       if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
       {
         generate_vref(vref_generated);
@@ -1256,7 +1258,7 @@ void smart_control_vref()
     }
     if (repeat_flag == 1){
 
-    if (abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)<= 0.1)
+    if (abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value)<= 0.2)
     {
       // finish function
       repeat_flag = 0;
@@ -1273,6 +1275,10 @@ void smart_control_vref()
       // repeat
       repeat_flag = 1;
     }
+    }
+
+    if (count == 100){
+      repeat_flag = 0;
     }
     //check button 2 && 4 to show this info 
     if (digitalRead(button1) == LOW && digitalRead(button2) == LOW){
