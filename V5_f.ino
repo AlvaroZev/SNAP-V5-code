@@ -1231,7 +1231,7 @@ void smart_control_vref()
     {
       // decrease vref
       //check if vref generated parameter is positive 
-       vref_generated = Aread2volt(average_adc(vref_feedback)) - (0.8*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+       vref_generated = Aread2volt(average_adc(vref_feedback)) - (0.4*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
       if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
       {
         generate_vref(vref_generated);
@@ -1246,7 +1246,7 @@ void smart_control_vref()
     else
     {
       // increase vref
-       vref_generated = Aread2volt(average_adc(vref_feedback)) + (0.8*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
+       vref_generated = Aread2volt(average_adc(vref_feedback)) + (0.4*abs(Aread2volt(average_adc(sensor_amplified)) - sensor_middle_value));
       if (vref_generated >= vref_min/1.1 && vref_generated <= vref_max*1.1)
       {
         generate_vref(vref_generated);
