@@ -508,20 +508,20 @@ void calculate_results(char element)
   calculated_V_pht_color = corriente_pht(prom_sensor_color, prom_vref_color)*(Rc/1000);
   if (element=='N') {
 
-  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.657;
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank)); //0.657
   calculated_concentration = 0.0;
   }
 
   else if (element=='K') {
 
-  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.495;
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank)); //0.495
   calculated_concentration = 0.0;
 
   }
 
   else if (element=='P') {
 
-  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank))/0.97;
+  calculated_absorbance = (-log10(calculated_V_pht_color  /calculated_V_pht_blank)); //0.97
   calculated_concentration = 0.0;
 
   }
